@@ -1,3 +1,5 @@
+CREATE DATABASE voting;
+\c voting;
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
