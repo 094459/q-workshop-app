@@ -1,64 +1,41 @@
--- Create the database if it doesn't exist
-CREATE DATABASE IF NOT EXISTS voting;
-
--- Use the voting database
-USE voting;
-
--- Users table
-CREATE TABLE IF NOT EXISTS Users (
-    UserID INT PRIMARY KEY AUTO_INCREMENT,
-    Email VARCHAR(255) UNIQUE NOT NULL,
-    Password VARCHAR(255) NOT NULL,
-    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL
 );
 
--- Polls table
-CREATE TABLE IF NOT EXISTS Polls (
-    PollID INT PRIMARY KEY AUTO_INCREMENT,
-    UserID INT NOT NULL,
-    Title VARCHAR(255) NOT NULL,
-    Description TEXT,
-    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+CREATE TABLE polls (
+    poll_id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(user_id),
+    title VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Choices table
-CREATE TABLE IF NOT EXISTS Choices (
-    ChoiceID INT PRIMARY KEY AUTO_INCREMENT,
-    PollID INT NOT NULL,
-    ChoiceText VARCHAR(255) NOT NULL,
-    FOREIGN KEY (PollID) REFERENCES Polls(PollID)
+CREATE TABLE poll_options (
+    option_id SERIAL PRIMARY KEY,
+    poll_id INTEGER REFERENCES polls(poll_id),
+    option_text VARCHAR(255) NOT NULL
 );
 
--- Votes table
-CREATE TABLE IF NOT EXISTS Votes (
-    VoteID INT PRIMARY KEY AUTO_INCREMENT,
-    ChoiceID INT NOT NULL,
-    VoterIP VARCHAR(45) NOT NULL,
-    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ChoiceID) REFERENCES Choices(ChoiceID)
+CREATE TABLE votes (
+    vote_id SERIAL PRIMARY KEY,
+    poll_id INTEGER REFERENCES polls(poll_id),
+    option_id INTEGER REFERENCES poll_options(option_id),
+    ip_address INET NOT NULL,
+    voted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Constraint to ensure each poll has between 2 and 5 choices
--- Note: This constraint will be added only if it doesn't already exist
-DELIMITER //
-CREATE PROCEDURE AddConstraintIfNotExists()
+CREATE OR REPLACE FUNCTION check_option_count()
+RETURNS TRIGGER AS $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT * FROM information_schema.TABLE_CONSTRAINTS
-        WHERE CONSTRAINT_SCHEMA = 'voting'
-        AND CONSTRAINT_NAME = 'chk_choice_count'
-        AND TABLE_NAME = 'Polls'
-    ) THEN
-        ALTER TABLE Polls
-        ADD CONSTRAINT chk_choice_count
-        CHECK (
-            (SELECT COUNT(*) FROM Choices WHERE PollID = Polls.PollID) BETWEEN 2 AND 5
-        );
+    IF (SELECT COUNT(*) FROM poll_options WHERE poll_id = NEW.poll_id) NOT BETWEEN 2 AND 5 THEN
+        RAISE EXCEPTION 'A poll must have between 2 and 5 options';
     END IF;
-END //
-DELIMITER ;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-CALL AddConstraintIfNotExists();
-DROP PROCEDURE IF EXISTS AddConstraintIfNotExists;
+CREATE TRIGGER check_option_count_trigger
+BEFORE INSERT OR UPDATE ON polls
+FOR EACH ROW
+EXECUTE FUNCTION check_option_count();
