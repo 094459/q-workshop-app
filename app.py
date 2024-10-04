@@ -135,16 +135,17 @@ def view_poll(poll_id):
         ip_address = request.remote_addr
         existing_vote = Vote.query.filter_by(poll_id=poll_id, ip_address=ip_address).first()
         
-        if existing_vote:
-            flash('You have already voted on this poll', 'error')
-            return redirect(url_for('view_poll', poll_id=poll_id))
+        # if existing_vote:
+        #     flash('You have already voted on this poll', 'error')
+        #     return redirect(url_for('view_poll', poll_id=poll_id))
         
+        new_vote = Vote(poll_id=poll_id, option_id=option_id, ip_address=ip_address)
         db.session.add(new_vote)
         db.session.commit()
         
         flash('Vote recorded successfully', 'success')
         return redirect(url_for('view_results', poll_id=poll_id))
-    
+    return render_template('view_poll.html', poll=poll, options=options)
 
 @app.route('/poll/<int:poll_id>/results')
 def view_results(poll_id):
@@ -155,6 +156,8 @@ def view_results(poll_id):
     for option in options:
         vote_count = Vote.query.filter_by(poll_id=poll_id, option_id=option.option_id).count()
         results[option.option_text] = vote_count
+
+    return render_template('view_results.html', poll=poll, results=results)
     
 
 if __name__ == '__main__':
