@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ poll.title }}</h1>
+<form method="POST">
+    {% for option in poll.options %}
+    <div class="form-check">
+        <input class="form-check-input" type="radio" name="option" id="option{{ option.option_id }}" value="{{ option.option_id }}" required>
+        <label class="form-check-label" for="option{{ option.option_id }}">
+            {{ option.option_text }}
+        </label>
+    </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary mt-3">Vote</button>
+</form>
+<a href="{{ url_for('results', poll_id=poll.poll_id) }}">View Results</a>
+{% endblock %}

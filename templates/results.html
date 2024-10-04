@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Results: {{ poll.title }}</h1>
+<p>Total votes: {{ total_votes }}</p>
+
+{% if results %}
+    <ul>
+    {% for result in results %}
+        <li>
+            {{ result.option }}: {{ result.count }} votes 
+            ({{ result.percentage|round(2) }}%)
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No votes have been cast yet.</p>
+{% endif %}
+
+<a href="{{ url_for('vote', poll_id=poll.poll_id) }}">Back to Poll</a>
+<a href="{{ url_for('home') }}">Back to Home</a>
+{% endblock %}

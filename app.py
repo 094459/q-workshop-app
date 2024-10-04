@@ -1,171 +1,204 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:change-me@127.0.0.1/voting'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.urandom(24)
-
 db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
-# Models
-class User(db.Model):
+# User model
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
     user_id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    polls = db.relationship('Poll', backref='user', lazy='dynamic')
 
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def get_id(self):
+        return str(self.user_id)
+
+# Poll model
 class Poll(db.Model):
     __tablename__ = 'polls'
     poll_id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
     title = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, server_default=db.func.now())
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    options = db.relationship('Option', backref='poll', cascade='all, delete-orphan', lazy='dynamic')
 
-class PollOption(db.Model):
+# Option model
+class Option(db.Model):
     __tablename__ = 'poll_options'
     option_id = db.Column(db.Integer, primary_key=True)
-    poll_id = db.Column(db.Integer, db.ForeignKey('polls.poll_id'))
+    poll_id = db.Column(db.Integer, db.ForeignKey('polls.poll_id'), nullable=False)
     option_text = db.Column(db.String(255), nullable=False)
+    votes = db.relationship('Vote', backref='option', cascade='all, delete-orphan', lazy='dynamic')
 
+# Vote model
 class Vote(db.Model):
     __tablename__ = 'votes'
     vote_id = db.Column(db.Integer, primary_key=True)
-    poll_id = db.Column(db.Integer, db.ForeignKey('polls.poll_id'))
-    option_id = db.Column(db.Integer, db.ForeignKey('poll_options.option_id'))
+    poll_id = db.Column(db.Integer, db.ForeignKey('polls.poll_id'), nullable=False)
+    option_id = db.Column(db.Integer, db.ForeignKey('poll_options.option_id'), nullable=False)
     ip_address = db.Column(db.String(45), nullable=False)
-    voted_at = db.Column(db.DateTime, server_default=db.func.now())
+    voted_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
-# User registration
-@app.route('/register', methods=['POST'])
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+@app.route('/')
+def home():
+    polls = Poll.query.order_by(Poll.created_at.desc()).all()
+    return render_template('home.html', polls=polls)
+
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-    
-    if not email or not password:
-        return jsonify({'message': 'Email and password are required'}), 400
-    
-    if User.query.filter_by(email=email).first():
-        return jsonify({'message': 'Email already registered'}), 400
-    
-    new_user = User(email=email, password_hash=generate_password_hash(password))
-    db.session.add(new_user)
-    db.session.commit()
-    
-    return jsonify({'message': 'User registered successfully'}), 201
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        user = User.query.filter_by(email=email).first()
+        if user:
+            flash('Email already exists')
+            return redirect(url_for('register'))
+        new_user = User(email=email)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
+        flash('Registered successfully')
+        return redirect(url_for('login'))
+    return render_template('register.html')
 
-# User login
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-    
-    user = User.query.filter_by(email=email).first()
-    
-    if user and check_password_hash(user.password_hash, password):
-        session['user_id'] = user.user_id
-        return jsonify({'message': 'Logged in successfully'}), 200
-    
-    return jsonify({'message': 'Invalid email or password'}), 401
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        user = User.query.filter_by(email=email).first()
+        if user and user.check_password(password):
+            login_user(user)
+            return redirect(url_for('home'))
+        flash('Invalid email or password')
+    return render_template('login.html')
 
-# User logout
-@app.route('/logout', methods=['POST'])
+@app.route('/logout')
+@login_required
 def logout():
-    session.pop('user_id', None)
-    return jsonify({'message': 'Logged out successfully'}), 200
+    logout_user()
+    return redirect(url_for('home'))
 
-# Create a new poll
-@app.route('/polls', methods=['POST'])
+@app.route('/create_poll', methods=['GET', 'POST'])
+@login_required
 def create_poll():
-    if 'user_id' not in session:
-        return jsonify({'message': 'You must be logged in to create a poll'}), 401
-    
-    data = request.get_json()
-    title = data.get('title')
-    options = data.get('options')
-    
-    if not title or not options or len(options) < 2:
-        return jsonify({'message': 'Title and at least two options are required'}), 400
-    
-    new_poll = Poll(user_id=session['user_id'], title=title)
-    db.session.add(new_poll)
-    db.session.flush()
-    
-    for option_text in options:
-        new_option = PollOption(poll_id=new_poll.poll_id, option_text=option_text)
-        db.session.add(new_option)
-    
-    db.session.commit()
-    
-    return jsonify({'message': 'Poll created successfully', 'poll_id': new_poll.poll_id}), 201
+    if request.method == 'POST':
+        title = request.form['title']
+        options = request.form.getlist('options')
 
-# Vote on a poll
-@app.route('/polls/<int:poll_id>/vote', methods=['POST'])
-def vote_on_poll(poll_id):
-    data = request.get_json()
-    option_id = data.get('option_id')
-    
-    if not option_id:
-        return jsonify({'message': 'Option ID is required'}), 400
-    
-    poll = Poll.query.get(poll_id)
-    if not poll:
-        return jsonify({'message': 'Poll not found'}), 404
-    
-    option = PollOption.query.filter_by(poll_id=poll_id, option_id=option_id).first()
-    if not option:
-        return jsonify({'message': 'Invalid option for this poll'}), 400
-    
-    ip_address = request.remote_addr
-    existing_vote = Vote.query.filter_by(poll_id=poll_id, ip_address=ip_address).first()
-    
-    if existing_vote:
-        return jsonify({'message': 'You have already voted on this poll'}), 400
-    
-    new_vote = Vote(poll_id=poll_id, option_id=option_id, ip_address=ip_address)
-    db.session.add(new_vote)
-    db.session.commit()
-    
-    return jsonify({'message': 'Vote recorded successfully'}), 201
+        if not title.strip():
+            flash('Poll title is required')
+            return redirect(url_for('create_poll'))
 
-# Get poll results
-@app.route('/polls/<int:poll_id>/results', methods=['GET'])
-def get_poll_results(poll_id):
-    poll = Poll.query.get(poll_id)
-    if not poll:
-        return jsonify({'message': 'Poll not found'}), 404
-    
-    options = PollOption.query.filter_by(poll_id=poll_id).all()
-    results = {}
-    
-    for option in options:
-        vote_count = Vote.query.filter_by(poll_id=poll_id, option_id=option.option_id).count()
-        results[option.option_text] = vote_count
-    
-    return jsonify({
-        'poll_title': poll.title,
-        'results': results
-    }), 200
+        if len(options) < 2:
+            flash('At least two options are required')
+            return redirect(url_for('create_poll'))
 
-# List all polls
-@app.route('/polls', methods=['GET'])
-def list_polls():
-    polls = Poll.query.all()
-    poll_list = []
+        new_poll = Poll(title=title, user_id=current_user.user_id)
+
+        # Add options to the poll
+        for option_text in options:
+            if option_text.strip() == '':
+                continue  # Skip empty options
+            option = Option(option_text=option_text.strip())
+            new_poll.options.append(option)
+
+        db.session.add(new_poll)
+        db.session.commit()
+        flash('Poll created successfully')
+        return redirect(url_for('home'))
+    return render_template('create_poll.html')
+
+
+
+
+@app.route('/my_polls')
+@login_required
+def my_polls():
+    user_polls = Poll.query.filter_by(user_id=current_user.user_id).order_by(Poll.created_at.desc()).all()
+    return render_template('my_polls.html', polls=user_polls)
+
+@app.route('/vote/<int:poll_id>', methods=['GET', 'POST'])
+def vote(poll_id):
+    poll = Poll.query.get_or_404(poll_id)
+    options = poll.options.all()
+    if request.method == 'POST':
+        option_id = request.form.get('option')
+        if not option_id:
+            flash('Please select an option to vote')
+            return redirect(url_for('vote', poll_id=poll_id))
+
+        option = Option.query.filter_by(option_id=option_id, poll_id=poll_id).first()
+        if not option:
+            flash('Invalid option selected')
+            return redirect(url_for('vote', poll_id=poll_id))
+
+        # Code to allow only single IPs to vote
+        # ip_address = request.remote_addr
+        # existing_vote = Vote.query.filter_by(poll_id=poll_id, ip_address=ip_address).first()
+        # if existing_vote:
+        #     flash('You have already voted in this poll')
+        # else:
+        #     vote = Vote(poll_id=poll_id, option_id=option_id, ip_address=ip_address)
+        #     db.session.add(vote)
+        #     db.session.commit()
+        #     flash('Vote recorded successfully')
+        ip_address = request.remote_addr
+        vote = Vote(poll_id=poll_id, option_id=option_id, ip_address=ip_address)
+        db.session.add(vote)
+        db.session.commit()
+        flash('Vote recorded successfully')
+        return redirect(url_for('home'))
+    return render_template('vote.html', poll=poll, options=options)
+
+@app.route('/results/<int:poll_id>')
+def results(poll_id):
+    poll = Poll.query.get_or_404(poll_id)
     
-    for poll in polls:
-        poll_data = {
-            'poll_id': poll.poll_id,
-            'title': poll.title,
-            'created_at': poll.created_at.isoformat()
+    # Count votes for each option
+    results = db.session.query(
+        Option.option_text,
+        func.count(Vote.vote_id).label('vote_count')
+    ).join(Vote, Vote.option_id == Option.option_id)\
+     .filter(Option.poll_id == poll_id)\
+     .group_by(Option.option_id, Option.option_text)\
+     .all()
+    
+    # Calculate total votes
+    total_votes = sum(result.vote_count for result in results)
+    
+    # Calculate percentages
+    results_with_percentage = [
+        {
+            'option': result.option_text,
+            'count': result.vote_count,
+            'percentage': (result.vote_count / total_votes * 100) if total_votes > 0 else 0
         }
-        poll_list.append(poll_data)
+        for result in results
+    ]
     
-    return jsonify({'polls': poll_list}), 200
+    return render_template('results.html', poll=poll, results=results_with_percentage, total_votes=total_votes)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

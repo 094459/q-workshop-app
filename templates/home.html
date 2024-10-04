@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Welcome to the Voting App</h1>
+{% if polls %}
+    <h2>Active Polls</h2>
+    <ul class="list-group">
+    {% for poll in polls %}
+        <li class="list-group-item">
+            <a href="{{ url_for('vote', poll_id=poll.poll_id) }}">{{ poll.title }}</a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No active polls at the moment.</p>
+{% endif %}
+{% endblock %}

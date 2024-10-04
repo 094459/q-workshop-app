@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>My Polls</h1>
+{% if polls %}
+    <ul class="list-group">
+    {% for poll in polls %}
+        <li class="list-group-item">
+            <a href="{{ url_for('vote', poll_id=poll.poll_id) }}">{{ poll.title }}</a>
+            <a href="{{ url_for('results', poll_id=poll.poll_id) }}">(View Results)</a>
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>You haven't created any polls yet.</p>
+{% endif %}
+{% endblock %}
