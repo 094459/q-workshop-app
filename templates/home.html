@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voting App</title>
+</head>
+<body>
+    <h1>Welcome to the Voting App</h1>
+    {% if 'user_id' in session %}
+        <a href="{{ url_for('create_poll') }}">Create a new poll</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+        <a href="{{ url_for('login') }}">Login</a>
+        <a href="{{ url_for('register') }}">Register</a>
+    {% endif %}
+    <h2>Available Polls</h2>
+    <ul>
+    {% for poll in polls %}
+        <li><a href="{{ url_for('view_poll', poll_id=poll.poll_id) }}">{{ poll.title }}</a></li>
+    {% endfor %}
+    </ul>
+</body>
+</html>

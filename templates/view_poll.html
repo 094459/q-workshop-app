@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ poll.title }}</title>
+</head>
+<body>
+    <h1>{{ poll.title }}</h1>
+    <form method="POST" action="{{ url_for('vote', poll_id=poll.poll_id) }}">
+        {% for option in options %}
+            <input type="radio" name="option" value="{{ option.option_id }}" required>
+            {{ option.option_text }}<br>
+        {% endfor %}
+        <input type="submit" value="Vote">
+    </form>
+    <a href="{{ url_for('results', poll_id=poll.poll_id) }}">View Results</a>
+</body>
+</html>

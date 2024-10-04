@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Results: {{ poll.title }}</title>
+</head>
+<body>
+    <h1>Results: {{ poll.title }}</h1>
+    <p>Total votes: {{ total_votes }}</p>
+    <ul>
+    {% for option, result in results.items() %}
+        <li>{{ option }}: {{ result.count }} votes ({{ result.percentage|round(2) }}%)</li>
+    {% endfor %}
+    </ul>
+    <a href="{{ url_for('view_poll', poll_id=poll.poll_id) }}">Back to Poll</a>
+    <a href="{{ url_for('home') }}">Back to Home</a>
+</body>
+</html>

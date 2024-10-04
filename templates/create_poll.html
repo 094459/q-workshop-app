@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Poll</title>
+</head>
+<body>
+    <h1>Create a New Poll</h1>
+    <form method="POST">
+        <input type="text" name="title" placeholder="Poll Title" required>
+        <div id="options">
+            <input type="text" name="options" placeholder="Option 1" required>
+            <input type="text" name="options" placeholder="Option 2" required>
+        </div>
+        <button type="button" onclick="addOption()">Add Option</button>
+        <input type="submit" value="Create Poll">
+    </form>
+    <script>
+        function addOption() {
+            var optionsDiv = document.getElementById('options');
+            if (optionsDiv.children.length < 5) {
+                var newOption = document.createElement('input');
+                newOption.type = 'text';
+                newOption.name = 'options';
+                newOption.placeholder = 'Option ' + (optionsDiv.children.length + 1);
+                newOption.required = true;
+                optionsDiv.appendChild(newOption);
+            } else {
+                alert('Maximum of 5 options allowed');
+            }
+        }
+    </script>
+</body>
+</html>
