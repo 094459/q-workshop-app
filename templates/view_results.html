@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}Results: {{ poll.title }} - Voting App{% endblock %}
+
+{% block content %}
+    <h1>Results: {{ poll.title }}</h1>
+    <ul>
+        {% for option, votes in results.items() %}
+            <li>{{ option }}: {{ votes }} vote(s)</li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('view_poll', poll_id=poll.poll_id) }}">Back to Poll</a>
+{% endblock %}

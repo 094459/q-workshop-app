@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Voting App{% endblock %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        nav { margin-bottom: 20px; }
+        nav a { margin-right: 10px; }
+        .flash-messages { margin-bottom: 20px; }
+        .flash-message { padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .flash-message.success { background-color: #d4edda; color: #155724; }
+        .flash-message.error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('index') }}">Home</a>
+        {% if 'user_id' in session %}
+            <a href="{{ url_for('create_poll') }}">Create Poll</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            <a href="{{ url_for('register') }}">Register</a>
+        {% endif %}
+    </nav>
+
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    {% block content %}{% endblock %}
+</body>
+</html>

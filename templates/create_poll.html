@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Create Poll - Voting App{% endblock %}
+
+{% block content %}
+    <h1>Create a New Poll</h1>
+    <form method="POST">
+        <div>
+            <label for="title">Poll Title:</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <div id="options">
+            <label>Options:</label>
+            <input type="text" name="options" required>
+            <input type="text" name="options" required>
+        </div>
+        <button type="button" onclick="addOption()">Add Option</button>
+        <button type="submit">Create Poll</button>
+    </form>
+
+    <script>
+        function addOption() {
+            const optionsDiv = document.getElementById('options');
+            const newOption = document.createElement('input');
+            newOption.type = 'text';
+            newOption.name = 'options';
+            optionsDiv.appendChild(newOption);
+        }
+    </script>
+{% endblock %}

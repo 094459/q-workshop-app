@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{{ poll.title }} - Voting App{% endblock %}
+
+{% block content %}
+    <h1>{{ poll.title }}</h1>
+    <form method="POST">
+        {% for option in options %}
+            <div>
+                <input type="radio" id="option{{ option.option_id }}" name="option_id" value="{{ option.option_id }}" required>
+                <label for="option{{ option.option_id }}">{{ option.option_text }}</label>
+            </div>
+        {% endfor %}
+        <button type="submit">Vote</button>
+    </form>
+    <a href="{{ url_for('view_results', poll_id=poll.poll_id) }}">View Results</a>
+{% endblock %}
