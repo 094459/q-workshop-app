@@ -1,7 +1,10 @@
-from flask import Flask, request, jsonify, session, render_template, redirect, url_for, flash
+from flask import Flask, make_response, request, jsonify, session, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import csv
+from io import StringIO
+from flask import send_file
 
 app = Flask(__name__)
 
@@ -203,7 +206,34 @@ def view_results(poll_id):
         results[option.option_text] = vote_count
 
     return render_template('view_results.html', poll=poll, results=results)
-    
+
+
+@app.route('/poll/<int:poll_id>/export')
+def export_poll(poll_id):
+    poll = Poll.query.get_or_404(poll_id)
+    options = PollOption.query.filter_by(poll_id=poll_id).all()
+    votes = Vote.query.filter_by(poll_id=poll_id).all()
+
+    # Create a StringIO object to write CSV data
+    si = StringIO()
+    cw = csv.writer(si)
+
+    # Write header
+    cw.writerow(['Poll Title', poll.title])
+
+
+    # Write data
+    for option in options:
+        vote_count = sum(1 for vote in votes if vote.option_id == option.option_id)
+        cw.writerow([option.option_text, vote_count])
+
+    # Create response
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = f"attachment; filename=poll_{poll_id}_results.csv"
+    output.headers["Content-type"] = "text/csv"
+
+    return output
+
 
 if __name__ == '__main__':
     app.run(debug=True)

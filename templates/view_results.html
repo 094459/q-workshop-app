@@ -10,4 +10,7 @@
         {% endfor %}
     </ul>
     <a href="{{ url_for('view_poll', poll_id=poll.poll_id) }}">Back to Poll</a>
+
+    <a href="{{ url_for('export_poll', poll_id=poll.poll_id) }}">Export Results as CSV</a>
+    
 {% endblock %}
