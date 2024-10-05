@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Our Polling Application</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>About Our Polling Application</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('about') }}">About</a></li>
+                {% if 'user_id' in session %}
+                    <li><a href="{{ url_for('create_poll') }}">Create Poll</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <h2>How It Works</h2>
+            <p>Our polling application allows users to create, vote on, and view results of various polls. Here's how it works:</p>
+            <ol>
+                <li><strong>Register:</strong> New users can create an account to start creating polls.</li>
+                <li><strong>Login:</strong> Registered users can log in to access all features.</li>
+                <li><strong>Create Polls:</strong> Logged-in users can create new polls with multiple options.</li>
+                <li><strong>Vote:</strong> Anyone can vote on existing polls (one vote per IP address).</li>
+                <li><strong>View Results:</strong> After voting, users can see the current results of the poll.</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Yoda's Wisdom</h2>
+            <blockquote>
+                "{{ wisdom }}"
+            </blockquote>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 Polling Application. All rights reserved.</p>
+    </footer>
+</body>
+</html>

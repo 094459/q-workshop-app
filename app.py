@@ -50,11 +50,44 @@ class Vote(db.Model):
     ip_address = db.Column(db.String(45), nullable=False)
     voted_at = db.Column(db.DateTime, server_default=db.func.now())
 
+# Yoda Wisdom - create a function that will return a single, random quote of wisdom from Master Yoda
+
+def get_yoda_wisdom():
+    import random
+    yoda_wisdom = [
+        "The greatest teacher, failure is.",
+        "Fear is the path to the dark side. Fear leads to anger. Anger leads to hate. Hate leads to suffering.",
+        "In a dark place we find ourselves, and a little more knowledge lights our way.",
+        "Always pass on what you have learned.",
+        "Truly wonderful, the mind of a child is.",
+        "No. Try not. Do. Or do not. There is no try.",
+        "Size matters not. Look at me. Judge me by my size, do you?",
+        "Do or do not. There is no try.",
+        "You must unlearn what you have learned.",
+        "The ability to speak does not make you intelligent.",
+        "The greatest teacher failure is.",
+        "You must unlearn what you have learned.",
+        "In a dark place we find ourselves, and a little more knowledge lights our way.",
+        "Always pass on what you have learned.",
+        "Truly wonderful, the mind of a child is.",
+        "No. Try not. Do. Or do not. There is no try.",
+        "Size matters not. Look at me. Judge me by my size, do you?"]
+    return random.choice(yoda_wisdom)
+
+
 # Routes
 @app.route('/')
 def index():
     polls = Poll.query.all()
     return render_template('index.html', polls=polls)
+
+
+# Add a route for /about that will display a new html page called about.html that includes a quote from the get_yoda_wisdom function
+@app.route('/about')
+def about():
+    wisdom = get_yoda_wisdom()
+    return render_template('about.html', wisdom=wisdom)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
