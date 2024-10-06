@@ -1,3 +1,11 @@
+"""
+Yoda Polls: A Flask-based web application for creating and participating in polls,
+with a touch of Yoda's wisdom.
+
+This module contains the main application logic, including database models,
+route handlers, and utility functions.
+"""
+
 from flask import Flask, make_response, request, jsonify, session, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,7 +15,6 @@ from io import StringIO
 from flask import send_file
 
 app = Flask(__name__)
-
 
 # Construct the database URI using environment variables
 db_user = os.environ.get('DB_USER', 'postgres')
@@ -27,12 +34,30 @@ db = SQLAlchemy(app)
 
 # Models
 class User(db.Model):
+    """
+    Represents a user in the application.
+
+    Attributes:
+        user_id (int): The unique identifier for the user.
+        email (str): The user's email address (unique).
+        password_hash (str): The hashed password for the user.
+    """
     __tablename__ = 'users'
     user_id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
 
 class Poll(db.Model):
+    """
+    Represents a poll created by a user.
+
+    Attributes:
+        poll_id (int): The unique identifier for the poll.
+        user_id (int): The ID of the user who created the poll.
+        title (str): The title of the poll.
+        created_at (datetime): The date and time when the poll was created.
+        options (relationship): The options associated with this poll.
+    """
     __tablename__ = 'polls'
     poll_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
@@ -41,12 +66,30 @@ class Poll(db.Model):
     options = db.relationship('PollOption', backref='poll', lazy='dynamic')
 
 class PollOption(db.Model):
+    """
+    Represents an option for a poll.
+
+    Attributes:
+        option_id (int): The unique identifier for the option.
+        poll_id (int): The ID of the poll this option belongs to.
+        option_text (str): The text of the option.
+    """
     __tablename__ = 'poll_options'
     option_id = db.Column(db.Integer, primary_key=True)
     poll_id = db.Column(db.Integer, db.ForeignKey('polls.poll_id'))
     option_text = db.Column(db.String(255), nullable=False)
 
 class Vote(db.Model):
+    """
+    Represents a vote cast by a user for a specific poll option.
+
+    Attributes:
+        vote_id (int): The unique identifier for the vote.
+        poll_id (int): The ID of the poll this vote belongs to.
+        option_id (int): The ID of the option that was voted for.
+        ip_address (str): The IP address of the voter.
+        voted_at (datetime): The date and time when the vote was cast.
+    """
     __tablename__ = 'votes'
     vote_id = db.Column(db.Integer, primary_key=True)
     poll_id = db.Column(db.Integer, db.ForeignKey('polls.poll_id'))
@@ -57,6 +100,12 @@ class Vote(db.Model):
 # Yoda Wisdom - create a function that will return a single, random quote of wisdom from Master Yoda
 
 def get_yoda_wisdom():
+    """
+    Retrieves a random Yoda wisdom quote from a predefined list.
+
+    Returns:
+        str: A random Yoda wisdom quote.
+    """
     import random
     yoda_wisdom = [
         "The greatest teacher, failure is.",
@@ -82,6 +131,12 @@ def get_yoda_wisdom():
 # Routes
 @app.route('/')
 def index():
+    """
+    Renders the home page with a list of all polls.
+
+    Returns:
+        str: Rendered HTML template for the index page.
+    """
     polls = Poll.query.all()
     return render_template('index.html', polls=polls)
 
@@ -89,12 +144,27 @@ def index():
 # Add a route for /about that will display a new html page called about.html that includes a quote from the get_yoda_wisdom function
 @app.route('/about')
 def about():
+    """
+    Renders the about page with a random Yoda quote.
+
+    Returns:
+        str: Rendered HTML template for the about page.
+    """
     wisdom = get_yoda_wisdom()
     return render_template('about.html', wisdom=wisdom)
 
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    Handles user registration.
+
+    If the request method is POST, it processes the registration form.
+    If the request method is GET, it renders the registration page.
+
+    Returns:
+        str: Rendered HTML template for the registration page or redirect to login page.
+    """
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -118,6 +188,15 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Handles user login.
+
+    If the request method is POST, it processes the login form.
+    If the request method is GET, it renders the login page.
+
+    Returns:
+        str: Rendered HTML template for the login page or redirect to index page.
+    """
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -135,12 +214,30 @@ def login():
 
 @app.route('/logout')
 def logout():
+    """
+    Handles user logout.
+
+    Removes the user_id from the session and redirects to the index page.
+
+    Returns:
+        redirect: Redirect to the index page.
+    """
     session.pop('user_id', None)
     flash('Logged out successfully', 'success')
     return redirect(url_for('index'))
 
 @app.route('/create_poll', methods=['GET', 'POST'])
 def create_poll():
+    """
+    Handles poll creation.
+
+    If the user is not logged in, redirects to the login page.
+    If the request method is POST, processes the form data to create a new poll.
+    If the request method is GET, renders the poll creation page.
+
+    Returns:
+        str: Rendered HTML template for poll creation or redirect to index/login page.
+    """
     if 'user_id' not in session:
         flash('You must be logged in to create a poll', 'error')
         return redirect(url_for('login'))
@@ -171,6 +268,18 @@ def create_poll():
 
 @app.route('/poll/<int:poll_id>', methods=['GET', 'POST'])
 def view_poll(poll_id):
+    """
+    Handles viewing and voting on a specific poll.
+
+    If the request method is GET, displays the poll and its options.
+    If the request method is POST, processes the user's vote.
+
+    Args:
+        poll_id (int): The ID of the poll to view or vote on.
+
+    Returns:
+        str: Rendered HTML template for viewing the poll or redirect to results page.
+    """
     poll = Poll.query.get_or_404(poll_id)
     options = PollOption.query.filter_by(poll_id=poll_id).all()
     
@@ -198,6 +307,17 @@ def view_poll(poll_id):
 
 @app.route('/poll/<int:poll_id>/results')
 def view_results(poll_id):
+    """
+    Displays the results of a specific poll.
+
+    Retrieves the poll details and calculates the vote count for each option.
+
+    Args:
+        poll_id (int): The ID of the poll to view results for.
+
+    Returns:
+        str: Rendered HTML template for viewing the poll results.
+    """
     poll = Poll.query.get_or_404(poll_id)
     options = PollOption.query.filter_by(poll_id=poll_id).all()
     results = {}
@@ -211,6 +331,22 @@ def view_results(poll_id):
 
 @app.route('/poll/<int:poll_id>/export')
 def export_poll(poll_id):
+    """
+    Exports the results of a specific poll as a CSV file.
+
+    This function retrieves the poll details, options, and votes,
+    then generates a CSV file with the poll results.
+
+    Args:
+        poll_id (int): The ID of the poll to export.
+
+    Returns:
+        Response: A Flask response object containing the CSV file
+        for download.
+
+    Raises:
+        404: If the specified poll_id does not exist.
+    """
     poll = Poll.query.get_or_404(poll_id)
     options = PollOption.query.filter_by(poll_id=poll_id).all()
     votes = Vote.query.filter_by(poll_id=poll_id).all()
@@ -221,7 +357,6 @@ def export_poll(poll_id):
 
     # Write header
     cw.writerow(['Poll Title', poll.title])
-
 
     # Write data
     for option in options:
