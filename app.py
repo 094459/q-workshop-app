@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session, render_template, redirect, url_for, flash
+from flask import Flask, request, session, render_template, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -79,7 +79,7 @@ def get_yoda_wisdom():
 @app.route('/')
 def index():
     polls = Poll.query.all()
-    return render_template('index.html', polls=polls)
+    return render_template('index.html', polls=poll)
 
 
 # Add a route for /about that will display a new html page called about.html that includes a quote from the get_yoda_wisdom function
