@@ -38,6 +38,7 @@ class Poll(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id'))
     title = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+    options = db.relationship('PollOption', backref='poll', lazy='dynamic')
 
 class PollOption(db.Model):
     __tablename__ = 'poll_options'
