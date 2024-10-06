@@ -27,17 +27,3 @@ CREATE TABLE votes (
     voted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE OR REPLACE FUNCTION check_option_count()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF (SELECT COUNT(*) FROM poll_options WHERE poll_id = NEW.poll_id) NOT BETWEEN 2 AND 5 THEN
-        RAISE EXCEPTION 'A poll must have between 2 and 5 options';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER check_option_count_trigger
-BEFORE INSERT OR UPDATE ON polls
-FOR EACH ROW
-EXECUTE FUNCTION check_option_count();
