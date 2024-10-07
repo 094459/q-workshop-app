@@ -2,55 +2,36 @@
 SPDX-FileCopyrightText: 2023 Beachgeek Enterprises
 SPDX-License-Identifier: Apache-2.0
 -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Our Polling Application</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <header>
-        <h1>About Our Polling Application</h1>
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('index') }}">Home</a></li>
-                <li><a href="{{ url_for('about') }}">About</a></li>
-                {% if 'user_id' in session %}
-                    <li><a href="{{ url_for('create_poll') }}">Create Poll</a></li>
-                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
-                {% else %}
-                    <li><a href="{{ url_for('login') }}">Login</a></li>
-                    <li><a href="{{ url_for('register') }}">Register</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </header>
+{% extends "base.html" %}
 
-    <main>
-        <section>
-            <h2>How It Works</h2>
-            <p>Our polling application allows users to create, vote on, and view results of various polls. Here's how it works:</p>
-            <ol>
-                <li><strong>Register:</strong> New users can create an account to start creating polls.</li>
-                <li><strong>Login:</strong> Registered users can log in to access all features.</li>
-                <li><strong>Create Polls:</strong> Logged-in users can create new polls with multiple options.</li>
-                <li><strong>Vote:</strong> Anyone can vote on existing polls (one vote per IP address).</li>
-                <li><strong>View Results:</strong> After voting, users can see the current results of the poll.</li>
-            </ol>
-        </section>
+{% block title %}About - Voting App{% endblock %}
 
-        <section>
-            <h2>Yoda's Wisdom</h2>
-            <blockquote>
-                "{{ wisdom }}"
-            </blockquote>
-        </section>
-    </main>
+{% block content %}
+<div class="about-container">
+    <h1 class="about-title">About Our Voting App</h1>
+    
+    <section class="about-section">
+        <h2 class="section-title">Our Mission</h2>
+        <p class="section-content">
+            Our mission is to provide a simple, user-friendly platform for creating and participating in polls. 
+            We believe in the power of collective decision-making and aim to make it accessible to everyone.
+        </p>
+    </section>
 
-    <footer>
-        <p>&copy; 2023 Beachgeek Enterprises. Licensed under the Apache License, Version 2.0.</p>
-    </footer>
-</body>
-</html>
+    <section class="about-section">
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-content">
+            Users can easily create polls, share them with others, and collect votes. 
+            Our system ensures fair and accurate results, providing real-time updates as votes come in.
+        </p>
+    </section>
+
+    <section class="about-section">
+        <h2 class="section-title">Contact Us</h2>
+        <p class="section-content">
+            If you have any questions or feedback, please don't hesitate to reach out to us at:
+            <a href="mailto:support@votingapp.com" class="contact-link">support@votingapp.com</a>
+        </p>
+    </section>
+</div>
+{% endblock %}

@@ -10,6 +10,7 @@ route handlers, and utility functions.
 
 from flask import Flask, make_response, request, jsonify, session, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 import csv
@@ -327,6 +328,7 @@ def view_results(poll_id):
     for option in options:
         vote_count = Vote.query.filter_by(poll_id=poll_id, option_id=option.option_id).count()
         results[option.option_text] = vote_count
+        
 
     return render_template('view_results.html', poll=poll, results=results)
 

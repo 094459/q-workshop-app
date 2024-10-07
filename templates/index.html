@@ -10,11 +10,21 @@ SPDX-License-Identifier: Apache-2.0
     <h1>Welcome to the Voting App</h1>
     <h2>Available Polls</h2>
     {% if polls %}
-        <ul>
+        <div class="polls-container">
             {% for poll in polls %}
-                <li><a href="{{ url_for('view_poll', poll_id=poll.poll_id) }}">{{ poll.title }}</a></li>
+                <div class="poll">
+                    <h2>{{ poll.title }}</h2>
+                    <ul class="poll-options">
+                        {% for option in poll.options %}
+                            <li class="poll-option">
+                                {{ option.option_text }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <a href="{{ url_for('view_poll', poll_id=poll.poll_id) }}" class="vote-button">View Poll</a>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% else %}
         <p>No polls available.</p>
     {% endif %}

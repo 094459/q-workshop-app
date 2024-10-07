@@ -7,14 +7,20 @@ SPDX-License-Identifier: Apache-2.0
 {% block title %}Results: {{ poll.title }} - Voting App{% endblock %}
 
 {% block content %}
-    <h1>Results: {{ poll.title }}</h1>
-    <ul>
-        {% for option, votes in results.items() %}
-            <li>{{ option }}: {{ votes }} vote(s)</li>
-        {% endfor %}
-    </ul>
-    <a href="{{ url_for('view_poll', poll_id=poll.poll_id) }}">Back to Poll</a>
-
-    <a href="{{ url_for('export_poll', poll_id=poll.poll_id) }}">Export Results as CSV</a>
-    
+    <div class="results-container">
+        <h1 class="results-title">Results: {{ poll.title }}</h1>
+        <ul class="results-list">
+            {% for option, votes in results.items() %}
+                <li class="result-item">
+                    <span class="option">{{ option }}:
+                    <span class="votes">{{ votes }} vote(s)
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="button-container">
+            <a href="{{ url_for('view_poll', poll_id=poll.poll_id) }}" class="button">Back to Poll</a>
+            <a href="{{ url_for('export_poll', poll_id=poll.poll_id) }}" class="button">Export Results as CSV</a>
+        </div>
+    </div>
 {% endblock %}
+
