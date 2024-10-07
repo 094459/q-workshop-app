@@ -67,4 +67,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for details.

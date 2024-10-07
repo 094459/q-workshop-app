@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2023 Beachgeek Enterprises
+# SPDX-License-Identifier: Apache-2.0
+
 import pytest
 from app import app, db, User, Poll, PollOption, Vote
 

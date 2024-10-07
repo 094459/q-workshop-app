@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2023 Beachgeek Enterprises
+# SPDX-License-Identifier: Apache-2.0
 """
 Yoda Polls: A Flask-based web application for creating and participating in polls,
 with a touch of Yoda's wisdom.
