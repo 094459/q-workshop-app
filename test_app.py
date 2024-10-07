@@ -10,17 +10,37 @@ def client():
             db.create_all()
             yield client
             db.session.remove()
-            db.drop_all
+            
+
+import time
+from datetime import datetime
 
 def test_user_registration_success(client):
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    email = f'username{timestamp}@example.com'
+    password = 'testpassword'
+
     response = client.post('/register', data={
-        'email': 'test@example.com',
-        'password': 'testpassword'
+        'email': email,
+        'password': password
     }, follow_redirects=True)
+
     assert response.status_code == 200
     assert b'User registered successfully' in response.data
-    user = User.query.filter_by(email='test@example.com').first()
+
+    user = User.query.filter_by(email=email).one_or_none()
     assert user is not None
+    
+
+# def test_user_registration_success(client):
+#     response = client.post('/register', data={
+#         'email': 'test@example.com',
+#         'password': 'testpassword'
+#     }, follow_redirects=True)
+#     assert response.status_code == 200
+#     assert b'User registered successfully' in response.data
+#     user = User.query.filter_by(email='test@example.com').first()
+#    assert user is not None
 
 def test_user_registration_duplicate_email(client):
     # Register a user
